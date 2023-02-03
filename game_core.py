@@ -1,5 +1,17 @@
 import pygame
 import numpy as np
+import threading
+from speech_recog import SpeechRecognition
+
+class Weather:
+    def __init__(self):
+        self.current = 'sunny'
+
+def new_weather(recog, weather):
+    weather.current = recog.record_recognize()
+
+    
+
 
 # snow
 MAX_RADIUS_SNOW = 2
@@ -50,13 +62,15 @@ class RainGenerator:
 
 counter = 0
 
+recog = SpeechRecognition('./audio/audio.wav')
+
 pygame.init()
 
 screen = pygame.display.set_mode((1920, 1080))
 
 running = True
 
-weather = 'sunny'
+weather = Weather()
 
 snow_gen = SnowGenerator()
 rain_gen = RainGenerator()
@@ -81,15 +95,19 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                thread = threading.Thread(target=new_weather, args=(recog, weather))
+                thread.start()
 
-    if (weather == 'snow'):
+    if (weather.current == 'snow'):
         screen.blit(snow_grad, (0, 0))
-    if (weather == 'rain'):
+    if (weather.current == 'rain'):
         screen.blit(rain_grad, (0, 0))
-    if (weather == 'sunny'):
+    if (weather.current == 'sunny'):
         screen.blit(sunny_grad, (0, 0))
 
-    if (weather == 'snow'):
+    if (weather.current == 'snow'):
         for i in snow_gen.snow:
             pygame.draw.circle(screen, (255, 255, 255), (i.x, i.y), i.r)
             if i.y < HEIGHT - 100:
@@ -97,7 +115,7 @@ while running:
         pygame.draw.rect(screen, (255, 255, 255), (0, HEIGHT-100, WIDTH, HEIGHT))
         if counter % SNOW_FREQUENCY == 0:
             snow_gen.gen()
-    elif (weather == 'rain'):
+    elif (weather.current == 'rain'):
         for i in rain_gen.rain:
             #pygame.draw.rect(screen, (211, 211, 211), (i.x, i.y, i.x+1, i.y+i.l))
             pygame.draw.circle(screen, (211, 211, 211), (i.x, i.y), i.l)
@@ -107,7 +125,7 @@ while running:
         pygame.draw.rect(screen, (211, 211, 211), (0, HEIGHT-100, WIDTH, HEIGHT))
         if counter % RAIN_FREQUENCY == 0 and len(rain_gen.rain) < 3000:
             rain_gen.gen()   
-    elif (weather == 'sunny'):
+    elif (weather.current == 'sunny'):
         if counter % WAVE_FREQUENCY == 0:
             sea_height = 600 + np.random.randint(100)
 
